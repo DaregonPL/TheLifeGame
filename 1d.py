@@ -5,7 +5,6 @@ import copy
 
 
 class TheLife():
-    glider = [(2, 0), (2, 1), (2, 2), (1, 2), (0, 1)]
     speedlist = [0.5, 0.75, 1, 1.5, 2, 5, 10, 20]
     bg = '◦'
     maxfill = 0.75
@@ -24,7 +23,7 @@ class TheLife():
                 self.width = v
 
     def run(self):
-        print('TheLifeGame CR: VovLer Games;\nSettings:')
+        print('TheLifeGame (1d-cut) CR: VovLer Games;\nSettings:')
         print(f' x:{self.width};\n y:{self.height}')
         print(f' speed{self.speed};\n cls:{self.cls};\n' +
               f'allow_repeat: {self.allow_repeat}')
@@ -63,7 +62,6 @@ class TheLife():
             print('\n= Setup: Enter {row};{column} to fill' +
                   ' a cell or nothin if you\'re done =')
             print('commands:')
-            print('"glider" - create glider')
             print('"random" - fill random cells')
             print('"cls" - enable/disable cleaning console')
             print('"speed" - change speed')
@@ -104,8 +102,6 @@ class TheLife():
                 for x in range(len(self.map.frames)):
                     print(f'\n = {x} =')
                     [print(' '.join(x)) for x in self.map.frames[x]]
-            elif x == 'glider':
-                [self.map.mark(*x) for x in self.glider]
             elif x == 'random':
                 cells = randint(0, int(self.map.w * self.map.h * self.maxfill))
                 for x in range(cells):
@@ -151,11 +147,11 @@ class Map():
             c, n = bl(self.val(*cell)), len([x for x in stk.near()
                                              if bl(self.val(*x))])
             if c:
-                if n < 2 or n > 3:
+                if n == 2 or n == 0:
                     field[cell[0]][cell[1]] = '□'
                     self.statistic['Died'] += 1
             else:
-                if n == 3:
+                if n == 1:
                     field[cell[0]][cell[1]] = '■'
                     self.statistic['Born'] += 1
             cell = stk.next()
@@ -195,13 +191,7 @@ class FrameStreak():
         return (self.y, self.x)
 
     def near(self):
-        return [((self.y + 1) % self.height, self.x),
-                ((self.y + 1) % self.height, (self.x + 1) % self.width),
-                ((self.y - 1) % self.height, (self.x + 1) % self.width),
-                ((self.y - 1) % self.height, (self.x - 1) % self.width),
-                ((self.y + 1) % self.height, (self.x - 1) % self.width),
-                (self.y, (self.x + 1) % self.width),
-                ((self.y - 1) % self.height, self.x),
+        return [(self.y, (self.x + 1) % self.width),
                 (self.y, (self.x - 1) % self.width)]
 
 
@@ -209,11 +199,9 @@ def bl(obj):
     return True if obj == '■' else False
 
 
-print('Height: (10 by default)')
-h = input()
 print('Width: (10 by default)')
 w = input()
 life = TheLife()
-life.setup(height=int(h)) if h.isdigit() else None
+life.setup(height=1)
 life.setup(width=int(w)) if w.isdigit() else None
 life.run()
