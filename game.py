@@ -1,5 +1,6 @@
 from random import randint
 import time
+import glob
 import os
 import copy
 
@@ -23,12 +24,14 @@ class TheLife():
             elif n == 'width':
                 self.width = v
 
+    def create_map(self):
+        self.map = Map(self.height, self.width)
+
     def run(self):
         print('TheLifeGame CR: VovLer Games;\nSettings:')
         print(f' x:{self.width};\n y:{self.height}')
         print(f' speed{self.speed};\n cls:{self.cls};\n' +
               f'allow_repeat: {self.allow_repeat}')
-        self.map = Map(self.height, self.width)
         self.set_marks()
         print('Limit of generations: (do not type anything to skip)')
         limit = input()
@@ -69,6 +72,7 @@ class TheLife():
             print('"speed" - change speed')
             print('"bg" - switch background')
             print('"allow_repeat" - allow/prohibit repeating frames')
+            print('"load" - load confifuration')
             print('\nSettings:')
             print(f' speed: {self.speed}x;\n cls: {self.cls};\n' +
                   f' allow_repeat: {self.allow_repeat};\n bg: "{self.bg}"')
@@ -113,6 +117,27 @@ class TheLife():
                                    randint(0, self.map.w - 1))
             elif x == 'save':
                 self.map.save()
+            elif x == 'load':
+                print('available:')
+                print('\n'.join([x for x in glob.glob('lfc/*.lfc')]))
+                f = input('\nlfc/___.lfc :\n>')
+                if os.path.exists(f'lfc/{f}.lfc'):
+                    with open(f'lfc/{f}.lfc') as lfc:
+                        data = lfc.read()
+                    h = len(data.split('\n'))
+                    w = max([len(x) for x in data.split('\n')])
+                    self.map = Map(h, w)
+                    data = data.split('\n')
+                    self.height = h
+                    self.width = w
+                    self.create_map()
+                    for x in range(h):
+                        for y in range(len(data[x])):
+                            self.map.mark(x, y) if data[x][y] == '1' else 0
+                    self.run()
+                    break
+                else:
+                    print('not found')
             elif x == 'cls':
                 self.cls = False if self.cls else True
                 print('CLS:', self.cls)
@@ -216,4 +241,5 @@ w = input()
 life = TheLife()
 life.setup(height=int(h)) if h.isdigit() else None
 life.setup(width=int(w)) if w.isdigit() else None
+life.create_map()
 life.run()
