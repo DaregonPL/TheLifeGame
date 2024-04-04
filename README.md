@@ -2,8 +2,8 @@
 This program is a recreation of te famuos game named "Life" made in python.
 
 How to play:
-1. download game.py
-2. Run game.py using IDLE or cmd ('python game.py') with installed python
+1. download launcher2d.py
+2. Run launcher2d.py using IDLE or cmd ('python game.py') with installed python
 
 Controls:
 - to fill/erace cell use its coordinates: x;y
@@ -25,8 +25,8 @@ Make sure you have a device to play on
 Эта программа представляет собой воссоздание знаменитой игры под названием «Жизнь», созданной на Python.
 
 Как играть:
-1. скачайте game.py
-2. Запустите game.py с помощью IDLE или cmd («python game.py») с установленным Python.
+1. скачайте launcher2d.py
+2. Запустите launcher2d.py с помощью IDLE или cmd («python game.py») с установленным Python.
 
 Элементы управления:
 - для заполнения/очистки ячейки используйте ее координаты: x;y
