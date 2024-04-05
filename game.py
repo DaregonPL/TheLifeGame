@@ -13,6 +13,8 @@ class TheLife():
     
     def __init__(self):
         self.height, self.width = 10, 10
+        self.f = ''
+        self.lastload = 'default'
         self.cls = False
         self.speed = 5
         self.allow_repeat = False
@@ -23,9 +25,15 @@ class TheLife():
                 self.height = v
             elif n == 'width':
                 self.width = v
+            elif n == 'lfc_startpath':
+                self.f = v
 
     def create_map(self):
         self.map = Map(self.height, self.width)
+        with open('lfc/default.lfc', 'w') as deflfc:
+            deflfc.write('\n'.join([''.join(y) for y in
+                                    [x for x in self.map.lastframe()]])
+                         .replace('■', '1').replace('□', '0'))
 
     def run(self):
         print('TheLifeGame CR: VovLer Games;\nSettings:')
@@ -35,8 +43,9 @@ class TheLife():
         self.set_marks()
         print('Limit of generations: (do not type anything to skip)')
         limit = input()
-        limit = int(limit) if limit.isdigit() else None
-        self.generate(limit, self.allow_repeat)
+        if limit != '0':
+            limit = int(limit) if limit.isdigit() else None
+            self.generate(limit, self.allow_repeat)
         print('Game Over! Results:')
         print(self.map.statistic)
         print(f'Generations: {len(self.map.frames)}')
@@ -70,12 +79,17 @@ class TheLife():
             print('"random" - fill random cells')
             print('"cls" - enable/disable cleaning console')
             print('"speed" - change speed')
+            print('"clear" - clear the map')
             print('"bg" - switch background')
             print('"allow_repeat" - allow/prohibit repeating frames')
+            print('"view" - preview of current configuration')
             print('"load" - load confifuration')
+            print('"reload" - load last file')
+            print('"save_lfc" - save configuration')
             print('\nSettings:')
             print(f' speed: {self.speed}x;\n cls: {self.cls};\n' +
                   f' allow_repeat: {self.allow_repeat};\n bg: "{self.bg}"')
+            print(f'CurrentFile: {self.lastload}.lfc')
             print('')
             field = self.apply_cord(self.map.lastframe())
             for r in field:
@@ -115,29 +129,84 @@ class TheLife():
                 for x in range(cells):
                     self.map.mark(randint(0, self.map.h - 1),
                                    randint(0, self.map.w - 1))
+            elif x == 'clear':
+                self.create_map()
             elif x == 'save':
                 self.map.save()
             elif x == 'load':
-                print('available:')
-                print('\n'.join([x for x in glob.glob('lfc/*.lfc')]))
-                f = input('\nlfc/___.lfc :\n>')
+                lfcs = [x[4:] for x in glob.glob('lfc/*.lfc')]
+                f = self.f
+                while 1:
+                    opt = self.lfc_navigate(f, lfcs)
+                    print(f'==== lfc/{f}')
+                    pos = []
+                    if f:
+                        print('<< back')
+                        pos.append('back')
+                    for typ, var in opt.items():
+                        for x in var:
+                            fp = self.lfc_navigate('.'.join([x for x in
+                                                             f.split('.') if x]
+                                                            + [x]), lfcs)
+                            st = '/' if typ == 'group' else '|' if typ == 'file' else ':'
+                            print(f'{st}{x}{" " * (20 - len(x))}|{typ}',
+                                  f' {len(fp["group"])}g',
+                                  f'{len(fp["file"])}f {len(fp["size"])}s')
+                            pos.append(x)
+                    if opt['size'] == ['default']:
+                        break
+                    ans = input('>')
+                    if ans in pos:
+                        if ans == 'back':
+                            f = '.'.join(f.split('.')[:-1])
+                            continue
+                        elif opt['size']:
+                            if ans != 'default':
+                                f += f'-{ans}'
+                            break
+                        f = '.'.join([x for x in f.split('.') if x] + [ans])
+                    elif ans == '-root':
+                        f = ''
+                    elif not ans:
+                        break
                 if os.path.exists(f'lfc/{f}.lfc'):
-                    with open(f'lfc/{f}.lfc') as lfc:
-                        data = lfc.read()
-                    h = len(data.split('\n'))
-                    w = max([len(x) for x in data.split('\n')])
-                    self.map = Map(h, w)
-                    data = data.split('\n')
-                    self.height = h
-                    self.width = w
-                    self.create_map()
-                    for x in range(h):
-                        for y in range(len(data[x])):
-                            self.map.mark(x, y) if data[x][y] == '1' else 0
+                    self.f = '.'.join(f.split('.')[:-1])
+                    self.load(f)
+                    self.lastload = f
                     self.run()
                     break
                 else:
                     print('not found')
+            elif x == 'reload':
+                if os.path.exists(f'lfc/{self.lastload}.lfc'):
+                    self.load(self.lastload)
+                    self.run()
+                    break
+                else:
+                    print('not found')
+            elif x == 'view':
+                pv = self.map.lastframe()
+                print('\n'.join([' '.join(x) for x in
+                                 pv]).replace('□', self.bg))
+            elif x == 'save_lfc':
+                print('Name format: {group}.{name}-{size}')
+                print('name:')
+                name = input('>|')
+                if not name:
+                    continue
+                elif [x for x in name if not
+                      (x.isalnum() or x in ['.', '-'])] or \
+                      name.count('-') not in [0, 1]:
+                    print('name can consist alpha, numbers, "." and "-" only.',
+                          'Use one "-"', sep='\n')
+                    continue
+                fld = self.map.lastframe()
+                fld = '\n'.join([''.join(y) for y in [x for x in fld]]) \
+                      .replace('■', '1').replace('□', '0')
+                with open(f'lfc/{name}.lfc', 'w') as fff:
+                    fff.write(fld)
+                self.lastload = name
+                print('saved')
             elif x == 'cls':
                 self.cls = False if self.cls else True
                 print('CLS:', self.cls)
@@ -154,10 +223,41 @@ class TheLife():
             else:
                 print('unexpected input')
 
+    def load(self, name):
+        with open(f'lfc/{name}.lfc') as lfc:
+            data = lfc.read()
+        h = len(data.split('\n'))
+        w = max([len(x) for x in data.split('\n')])
+        self.map = Map(h, w)
+        data = data.split('\n')
+        self.height = h
+        self.width = w
+        self.create_map()
+        for x in range(h):
+            for y in range(len(data[x])):
+                self.map.mark(x, y) if data[x][y] == '1' else 0
+
     def apply_cord(self, matrix):
         mtx = matrix.copy()
         return [[' '] + [str(x) for x in range(self.width)]] + \
                [[str(x)] + mtx[x] for x in range(self.height)]
+
+    def lfc_navigate(self, group, fileList):
+        a = [x for x in fileList if x.startswith(group)]
+        group = [x for x in group.split('.') if x]
+        opts = {'group': [], 'file': [], 'size': []}
+        for x in a:
+            fulldata = x.split('.')[:-1]
+            fit = fulldata[len(group):]
+            if len(fit) > 1 and fit[0] not in opts['group']:
+                opts['group'].append(fit[0])
+            elif len(fit) == 1 and fit[0].split('-')[0] not in opts['file']:
+                opts['file'].append(fit[0].split('-')[0])
+            elif len(fit) == 0 and '-' not in fulldata[-1]:
+                opts['size'].append('default')
+            elif len(fit) == 0 and fulldata[-1].split('-')[1] not in opts['size']:
+                opts['size'].append(fulldata[-1].split('-')[1])
+        return opts
 
 
 class Map():
