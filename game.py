@@ -10,7 +10,7 @@ class TheLife():
     speedlist = [0.5, 0.75, 1, 1.5, 2, 5, 10, 20]
     bg = '◦'
     maxfill = 0.75
-    
+
     def __init__(self):
         self.height, self.width = 10, 10
         self.f = ''
@@ -60,7 +60,7 @@ class TheLife():
             os.system('cls') if self.cls else print('\n\n\n')
             self.map.generate()
             [print(' '.join(x).replace('□', self.bg)) for x in
-                     self.map.lastframe()]
+             self.map.lastframe()]
             if limit and framenum == limit:
                 break
             elif not repeat_ok and self.map.lastframe() in self.map.frames:
@@ -83,6 +83,7 @@ class TheLife():
             print('"bg" - switch background')
             print('"allow_repeat" - allow/prohibit repeating frames')
             print('"view" - preview of current configuration')
+            print('"resize" - resize the map')
             print('"load" - load confifuration')
             print('"reload" - load last file')
             print('"save_lfc" - save configuration')
@@ -106,7 +107,7 @@ class TheLife():
             x = input()
             if x.split(';') and not [x for x in x.split(';')
                                      if not x.isdigit()] and \
-                        len(x.split(';')) == 2:
+               len(x.split(';')) == 2:
                 try:
                     if bl(self.map.val(*[int(a) for a in x.split(';')])):
                         self.map.pop(*x.split(';'))
@@ -128,11 +129,15 @@ class TheLife():
                 cells = randint(0, int(self.map.w * self.map.h * self.maxfill))
                 for x in range(cells):
                     self.map.mark(randint(0, self.map.h - 1),
-                                   randint(0, self.map.w - 1))
+                                  randint(0, self.map.w - 1))
             elif x == 'clear':
                 self.create_map()
             elif x == 'save':
                 self.map.save()
+            elif x == 'resize':
+                self.ask_size()
+                self.run()
+                break
             elif x == 'load':
                 lfcs = [x[4:] for x in glob.glob('lfc/*.lfc')]
                 f = self.f
@@ -148,7 +153,8 @@ class TheLife():
                             fp = self.lfc_navigate('.'.join([x for x in
                                                              f.split('.') if x]
                                                             + [x]), lfcs)
-                            st = '/' if typ == 'group' else '|' if typ == 'file' else ':'
+                            st = '/' if typ == 'group' else '|' \
+                                 if typ == 'file' else ':'
                             print(f'{st}{x}{" " * (20 - len(x))}|{typ}',
                                   f' {len(fp["group"])}g',
                                   f'{len(fp["file"])}f {len(fp["size"])}s')
@@ -194,9 +200,9 @@ class TheLife():
                 name = input('>|')
                 if not name:
                     continue
-                elif [x for x in name if not
-                      (x.isalnum() or x in ['.', '-'])] or \
-                      name.count('-') not in [0, 1]:
+                elif ([x for x in name if not
+                      (x.isalnum() or x in ['.', '-'])] or
+                      (name.count('-') not in [0, 1])):
                     print('name can consist alpha, numbers, "." and "-" only.',
                           'Use one "-"', sep='\n')
                     continue
@@ -255,9 +261,19 @@ class TheLife():
                 opts['file'].append(fit[0].split('-')[0])
             elif len(fit) == 0 and '-' not in fulldata[-1]:
                 opts['size'].append('default')
-            elif len(fit) == 0 and fulldata[-1].split('-')[1] not in opts['size']:
+            elif len(fit) == 0 and (fulldata[-1].split('-')[1]
+                                    not in opts['size']):
                 opts['size'].append(fulldata[-1].split('-')[1])
         return opts
+
+    def ask_size(self):
+        print('Height: (10 by default)')
+        h = input()
+        print('Width: (10 by default)')
+        w = input()
+        self.setup(height=int(h)) if h.isdigit() else None
+        self.setup(width=int(w)) if w.isdigit() else None
+        self.create_map()
 
 
 class Map():
@@ -332,14 +348,3 @@ class FrameStreak():
 
 def bl(obj):
     return True if obj == '■' else False
-
-
-print('Height: (10 by default)')
-h = input()
-print('Width: (10 by default)')
-w = input()
-life = TheLife()
-life.setup(height=int(h)) if h.isdigit() else None
-life.setup(width=int(w)) if w.isdigit() else None
-life.create_map()
-life.run()
