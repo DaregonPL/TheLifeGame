@@ -25,8 +25,8 @@ Make sure you have a device to play on
 Эта программа представляет собой воссоздание знаменитой игры под названием «Жизнь», созданной на Python.
 
 Как играть:
-1. скачайте launcher2d.py
-2. Запустите launcher2d.py с помощью IDLE или cmd («python game.py») с установленным Python.
+1. скачайте launcher.py
+2. Запустите launcher.py с помощью IDLE или cmd («python game.py») с установленным Python.
 
 Элементы управления:
 - для заполнения/очистки ячейки используйте ее координаты: x;y
